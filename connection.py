@@ -74,13 +74,30 @@ if __name__ == '__main__':
     api_thread.start()
     time.sleep(1)
     app.createStockContract('SPY', 'SMART')
-    app.reqHistoricalData(1, app.contract, '', '1 D', '30 mins', 'TRADES', 1, 1, False, [])
+    app.reqHistoricalData(1, app.contract, '', '2 D', '5 mins', 'TRADES', 1, 1, False, [])
     time.sleep(5)
-    print(app.data)
+    # print(app.data)
     df = pd.DataFrame(app.data, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
-    print(df.head())
-    chart = Candlestick(df)
-    chart.add_EMA(9, 20, 200)
-    chart.add_VWAP()
+    # chart = Candlestick(df)
+    # chart.add_EMA(20, 7)
+    # chart.add_VWAP()
+    # chart.show_chart()
+    # print(df.head())
+    count = 0
+    df_list = df.values.tolist()
+    # print(df_list)
+    market_after_10_list = [x for x in df_list if int(x[0][-8:-6]) >= 10]
+    # print(market_after_10_list)
+    df_settled = pd.DataFrame(market_after_10_list, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
+    print(df_settled.head())
+    chart = Candlestick(df_settled)
+    chart.add_EMA(7, 20)
     chart.show_chart()
+    # Short term moves above long term EMA
+    for i in range(df_settled['datetime'].size - 1):
+        if i > 0:
+            if df_settled.iloc[i, df_settled.columns.get_loc('7 EMA')] < df_settled.iloc[i, df_settled.columns.get_loc('20 EMA')] and df_settled.iloc[i + 1, df_settled.columns.get_loc('7 EMA')] > df_settled.iloc[i + 1, df_settled.columns.get_loc('20 EMA')]:
+                count += 1
+                print(i)
+    print(count)
     app.disconnect()
