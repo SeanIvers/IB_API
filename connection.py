@@ -58,6 +58,35 @@ class Candlestick:
 
         self.figures.append(go.Scatter(name='VWAP', x=self.df['datetime'], y=self.df['VWAP']))
 
+    def remove_time(self, market_time):
+        # Remove time before market hour
+        # Format = hh:mm
+        df_list = self.df.values.tolist()
+        print(df_list)
+        indx_market_time = []
+        new_df_list = []
+        end_time = '15:55'
+        index_end_time = []
+        for i in df_list:
+            if i[0][-8:-3] == market_time:
+                indx = df_list.index(i)
+                break
+        new_df_list = df_list[indx:]
+        for i in df_list:
+            if i[0][-8:-3] == end_time:
+                index_end_time.append(new_df_list.index(i))
+            if i[0][-8:-3] == market_time:
+                indx = df_list.index(i)
+                indx_market_time.append(new_df_list.index(i))
+        newer_df_list = []
+        for a, b in zip(indx_market_time, index_end_time):
+            print(a, b)
+            for i in range(a, b + 1):
+                newer_df_list.append(new_df_list[i])
+        new_df = pd.DataFrame(data=newer_df_list, columns=self.df.columns)
+        self.df = new_df
+        self.figures[0] = go.Candlestick(x=self.df['datetime'], open=self.df['open'], high=self.df['high'], low=self.df['low'], close=self.df['close'])
+
     def show_chart(self):
         fig = go.Figure(
             self.figures
@@ -78,26 +107,8 @@ if __name__ == '__main__':
     time.sleep(5)
     # print(app.data)
     df = pd.DataFrame(app.data, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
-    # chart = Candlestick(df)
-    # chart.add_EMA(20, 7)
-    # chart.add_VWAP()
-    # chart.show_chart()
-    # print(df.head())
-    count = 0
-    df_list = df.values.tolist()
-    # print(df_list)
-    market_after_10_list = [x for x in df_list if int(x[0][-8:-6]) >= 10]
-    # print(market_after_10_list)
-    df_settled = pd.DataFrame(market_after_10_list, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
-    print(df_settled.head())
-    chart = Candlestick(df_settled)
-    chart.add_EMA(7, 20)
+    chart = Candlestick(df)
+    chart.remove_time('11:00')
+    chart.add_EMA(20, 200)
     chart.show_chart()
-    # Short term moves above long term EMA
-    for i in range(df_settled['datetime'].size - 1):
-        if i > 0:
-            if df_settled.iloc[i, df_settled.columns.get_loc('7 EMA')] < df_settled.iloc[i, df_settled.columns.get_loc('20 EMA')] and df_settled.iloc[i + 1, df_settled.columns.get_loc('7 EMA')] > df_settled.iloc[i + 1, df_settled.columns.get_loc('20 EMA')]:
-                count += 1
-                print(i)
-    print(count)
     app.disconnect()
