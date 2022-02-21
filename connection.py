@@ -36,6 +36,7 @@ class Candlestick:
             self.figures.append(go.Scatter(name = f'{arg} EMA', x=self.df['datetime'], y=self.df[f'{arg} EMA']))
 
     def add_VWAP(self):
+        # Only use on one day
         price_volume_period = []
         price_volume_cumsum = []
         vwap = []
@@ -61,8 +62,8 @@ class Candlestick:
     def remove_time(self, market_time):
         # Remove time before market hour
         # Format = hh:mm
+        # DO THIS FIRST!
         df_list = self.df.values.tolist()
-        print(df_list)
         indx_market_time = []
         new_df_list = []
         end_time = '15:55'
@@ -80,7 +81,6 @@ class Candlestick:
                 indx_market_time.append(new_df_list.index(i))
         newer_df_list = []
         for a, b in zip(indx_market_time, index_end_time):
-            print(a, b)
             for i in range(a, b + 1):
                 newer_df_list.append(new_df_list[i])
         new_df = pd.DataFrame(data=newer_df_list, columns=self.df.columns)
@@ -103,12 +103,12 @@ if __name__ == '__main__':
     api_thread.start()
     time.sleep(1)
     app.createStockContract('SPY', 'SMART')
-    app.reqHistoricalData(1, app.contract, '', '2 D', '5 mins', 'TRADES', 1, 1, False, [])
+    app.reqHistoricalData(1, app.contract, '20220214 16:00:00', '1 D', '5 mins', 'TRADES', 1, 1, False, [])
     time.sleep(5)
-    # print(app.data)
     df = pd.DataFrame(app.data, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
     chart = Candlestick(df)
-    chart.remove_time('11:00')
-    chart.add_EMA(20, 200)
+    chart.remove_time('10:00')
+    chart.add_EMA(7, 20, 200)
+    chart.add_VWAP()
     chart.show_chart()
     app.disconnect()
